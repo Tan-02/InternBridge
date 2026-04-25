@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Faculty Dashboard — InternBridge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink:#0d0d0d; --paper:#f5f2eb; --accent:#2a7d4f;
+      --muted:#7a7670; --card:#ffffff; --border:#e0dcd4;
+    }
+    body { font-family:'DM Sans',sans-serif; background:var(--paper); color:var(--ink); }
+
+    .sidebar {
+      position:fixed; left:0; top:0; bottom:0; width:240px;
+      background:var(--ink); color:var(--paper);
+      display:flex; flex-direction:column; padding:28px 20px; z-index:100;
+    }
+    .sidebar-logo { font-family:'Syne',sans-serif; font-size:18px; font-weight:800;
+      letter-spacing:-0.5px; margin-bottom:40px; display:flex; align-items:center; gap:8px; }
+    .logo-dot { width:8px; height:8px; background:var(--accent); border-radius:50%; }
+    .nav-section { font-size:10px; letter-spacing:2px; text-transform:uppercase;
+      color:#666; margin:20px 0 8px; font-weight:500; }
+    .nav-item {
+      display:flex; align-items:center; gap:10px; padding:10px 12px;
+      border-radius:8px; cursor:pointer; font-size:14px;
+      color:#aaa; transition:all 0.15s; margin-bottom:2px; border:none;
+      background:transparent; width:100%; text-align:left; font-family:'DM Sans',sans-serif;
+    }
+    .nav-item:hover { background:#1e1e1e; color:var(--paper); }
+    .nav-item.active { background:var(--accent); color:#fff; font-weight:500; }
+    .nav-item .icon { font-size:16px; width:20px; text-align:center; }
+    .sidebar-bottom { margin-top:auto; }
+    .user-chip { display:flex; align-items:center; gap:10px; padding:12px;
+      background:#1a1a1a; border-radius:10px; }
+    .avatar { width:36px; height:36px; background:var(--accent); border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Syne',sans-serif; font-weight:700; font-size:14px; color:#fff; }
+    .user-name { font-size:13px; font-weight:500; }
+    .user-role { font-size:11px; color:#888; }
+
+    .main { margin-left:240px; padding:36px 40px; min-height:100vh; }
+    .page-header { margin-bottom:32px; }
+    .page-header h1 { font-family:'Syne',sans-serif; font-size:30px; font-weight:700; }
+    .page-header p { color:var(--muted); font-size:15px; margin-top:4px; }
+
+    .section { display:none; }
+    .section.active { display:block; }
+
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 22px; }
+    .stat-card .num { font-family:'Syne',sans-serif; font-size:28px; font-weight:700; }
+    .stat-card .lbl { font-size:12px; color:var(--muted); margin-top:3px; }
+    .stat-card.accent { background:var(--accent); border-color:var(--accent); }
+    .stat-card.accent .num,.stat-card.accent .lbl { color:#fff; }
+
+    /* Student tracker cards */
+    .student-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .student-card {
+      background:var(--card); border:1px solid var(--border); border-radius:14px; padding:22px;
+    }
+    .student-card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+    .student-name { font-family:'Syne',sans-serif; font-size:16px; font-weight:600; }
+    .student-company { font-size:13px; color:var(--muted); margin-top:2px; }
+    .progress-bar-wrap { margin:14px 0; }
+    .progress-label { display:flex; justify-content:space-between; font-size:12px;
+      color:var(--muted); margin-bottom:5px; }
+    .progress-bar { background:var(--paper); border-radius:99px; height:7px; overflow:hidden; }
+    .progress-fill { height:100%; border-radius:99px; background:var(--accent); transition:width 0.5s; }
+
+    .note-form { margin-top:14px; }
+    .note-form textarea {
+      width:100%; padding:10px 12px; border:1.5px solid var(--border);
+      border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px;
+      background:var(--paper); color:var(--ink); outline:none; resize:none;
+      transition:border-color 0.2s;
+    }
+    .note-form textarea:focus { border-color:var(--accent); }
+    .note-actions { display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
+    .btn-note {
+      padding:7px 16px; background:var(--accent); color:#fff; border:none;
+      border-radius:7px; font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif;
+    }
+    .progress-set { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); }
+    .progress-set input { width:60px; padding:4px 8px; border:1px solid var(--border);
+      border-radius:6px; font-size:13px; background:var(--paper); }
+
+    .week-badge { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600;
+      background:#dbeafe; color:#1e40af; }
+
+    /* Notes history */
+    .note-history { margin-top:10px; }
+    .note-item { background:var(--paper); border-radius:8px; padding:10px 12px;
+      font-size:13px; line-height:1.6; margin-bottom:6px; border-left:3px solid var(--accent); }
+    .note-date { font-size:11px; color:var(--muted); margin-bottom:3px; }
+
+    /* Recommend section */
+    .table-wrap { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+    table { width:100%; border-collapse:collapse; }
+    th { padding:14px 18px; font-size:11px; font-weight:500; letter-spacing:1px;
+      text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border);
+      text-align:left; background:var(--paper); }
+    td { padding:14px 18px; font-size:14px; border-bottom:1px solid var(--border); }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#faf9f7; }
+
+    .btn-recommend {
+      padding:6px 14px; background:var(--accent); color:#fff; border:none;
+      border-radius:7px; font-size:12px; cursor:pointer; font-family:'DM Sans',sans-serif;
+    }
+    .btn-recommend:disabled { background:#ccc; cursor:default; }
+    .match-pill { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .m-high { background:#dcfce7; color:#166534; }
+    .m-mid  { background:#fef9c3; color:#854d0e; }
+    .m-low  { background:#fee2e2; color:#991b1b; }
+
+    .toast { position:fixed; bottom:24px; right:24px; background:var(--ink); color:#fff;
+      padding:12px 20px; border-radius:8px; font-size:14px; opacity:0;
+      transform:translateY(8px); transition:all 0.3s; pointer-events:none; z-index:999; }
+    .toast.show { opacity:1; transform:translateY(0); }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="logo-dot"></div>InternBridge</div>
+  <div class="nav-section">Faculty</div>
+  <button class="nav-item active" onclick="showSection('tracker', this)">
+    <span class="icon">📊</span> Student Tracker
+  </button>
+  <button class="nav-item" onclick="showSection('recommend', this)">
+    <span class="icon">⭐</span> Recommend Students
+  </button>
+  <div class="nav-section">Account</div>
+  <button class="nav-item" onclick="logout()"><span class="icon">🚪</span> Logout</button>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar">P</div>
+      <div>
+        <div class="user-name">Prof. Meena Rao</div>
+        <div class="user-role">Faculty Mentor</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- TRACKER -->
+  <div class="section active" id="sec-tracker">
+    <div class="page-header">
+      <h1>Student Progress Tracker</h1>
+      <p>Monitor internship progress and log weekly notes</p>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card accent"><div class="num">8</div><div class="lbl">Students Assigned</div></div>
+      <div class="stat-card"><div class="num">5</div><div class="lbl">On Track</div></div>
+      <div class="stat-card"><div class="num">2</div><div class="lbl">Need Attention</div></div>
+      <div class="stat-card"><div class="num">1</div><div class="lbl">Completed</div></div>
+    </div>
+    <div class="student-grid" id="student-grid"></div>
+  </div>
+
+  <!-- RECOMMEND -->
+  <div class="section" id="sec-recommend">
+    <div class="page-header">
+      <h1>Recommend Students</h1>
+      <p>Recommend eligible students to companies based on their profiles</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Student</th><th>CGPA</th><th>Skills</th><th>Match</th><th>Internship</th><th>Action</th></tr>
+        </thead>
+        <tbody id="recommend-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const students = [
+    {
+      name:'Arjun Sharma', roll:'21CSE0142', company:'Infosys', role:'Frontend Intern',
+      progress:65, week:6,
+      notes:[
+        { date:'Week 5', text:'Strong JavaScript skills. Dashboard module completed ahead of schedule. Needs better documentation.' },
+        { date:'Week 3', text:'Good start. Adapting well to company workflow.' },
+      ]
+    },
+    {
+      name:'Priya Nair', roll:'21CSE0089', company:'Zoho Corp', role:'Full Stack Intern',
+      progress:80, week:8,
+      notes:[
+        { date:'Week 7', text:'Exceptional progress. Deployed first feature to staging. Very proactive.' },
+      ]
+    },
+    {
+      name:'Rohan Das', roll:'21CSE0201', company:'TCS', role:'Data Science Intern',
+      progress:40, week:4,
+      notes:[
+        { date:'Week 3', text:'Struggling with pandas and data cleaning. Needs additional support from college.' },
+      ]
+    },
+    {
+      name:'Sneha Pillai', roll:'21CSE0167', company:'Wipro', role:'Backend Intern',
+      progress:55, week:5,
+      notes:[],
+    },
+  ];
+
+  const recommendData = [
+    { name:'Arjun Sharma', cgpa:8.4, skills:['React','Node.js'], match:92, internship:'Infosys — Frontend' },
+    { name:'Priya Nair',   cgpa:9.1, skills:['React','TypeScript'], match:88, internship:'Zoho — Full Stack' },
+    { name:'Karan Mehta',  cgpa:7.2, skills:['Python','ML'], match:74, internship:'TCS — Data Science' },
+    { name:'Aisha Khan',   cgpa:8.0, skills:['Java','Spring'], match:61, internship:'Wipro — Backend' },
+    { name:'Dev Patel',    cgpa:6.9, skills:['HTML','CSS','JS'], match:45, internship:'HCL — DevOps' },
+  ];
+
+  function renderStudents() {
+    document.getElementById('student-grid').innerHTML = students.map((s, i) => `
+      <div class="student-card">
+        <div class="student-card-top">
+          <div>
+            <div class="student-name">${s.name}</div>
+            <div class="student-company">${s.role} · ${s.company}</div>
+          </div>
+          <span class="week-badge">Week ${s.week}</span>
+        </div>
+
+        <div class="progress-bar-wrap">
+          <div class="progress-label">
+            <span>Progress</span>
+            <span id="prog-label-${i}">${s.progress}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="prog-fill-${i}" style="width:${s.progress}%"></div>
+          </div>
+        </div>
+
+        <div class="note-history">
+          ${s.notes.slice(0,2).map(n=>`
+            <div class="note-item">
+              <div class="note-date">${n.date}</div>
+              ${n.text}
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="note-form">
+          <textarea id="note-${i}" rows="2" placeholder="Add a note for this week…"></textarea>
+          <div class="note-actions">
+            <div class="progress-set">
+              Progress:
+              <input type="number" id="prog-input-${i}" value="${s.progress}" min="0" max="100"/>%
+            </div>
+            <button class="btn-note" onclick="saveNote(${i})">Save Note</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+  renderStudents();
+
+  function saveNote(i) {
+    const note = document.getElementById(`note-${i}`).value.trim();
+    const prog = parseInt(document.getElementById(`prog-input-${i}`).value);
+    if (!note) { showToast('Please write a note first'); return; }
+    students[i].notes.unshift({ date:`Week ${students[i].week}`, text: note });
+    students[i].progress = prog;
+    document.getElementById(`prog-fill-${i}`).style.width = prog + '%';
+    document.getElementById(`prog-label-${i}`).textContent = prog + '%';
+    document.getElementById(`note-${i}`).value = '';
+    showToast(`Note saved for ${students[i].name}`);
+    renderStudents();
+  }
+
+  function renderRecommend() {
+    document.getElementById('recommend-body').innerHTML = recommendData.map((r,i) => `
+      <tr>
+        <td><strong>${r.name}</strong></td>
+        <td>${r.cgpa}</td>
+        <td>${r.skills.join(', ')}</td>
+        <td><span class="match-pill ${r.match>=80?'m-high':r.match>=60?'m-mid':'m-low'}">${r.match}%</span></td>
+        <td style="font-size:13px;color:var(--muted)">${r.internship}</td>
+        <td><button class="btn-recommend" id="rec-btn-${i}" onclick="recommend(${i})">Recommend</button></td>
+      </tr>
+    `).join('');
+  }
+  renderRecommend();
+
+  function recommend(i) {
+    const btn = document.getElementById(`rec-btn-${i}`);
+    btn.disabled = true;
+    btn.textContent = '✓ Recommended';
+    showToast(`${recommendData[i].name} recommended!`);
+  }
+
+  function showSection(name, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(`sec-${name}`).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function logout() { sessionStorage.clear(); window.location.href = '/Front-end/index.html'; }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>

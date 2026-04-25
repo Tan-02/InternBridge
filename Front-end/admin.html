@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard — InternBridge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink:#0d0d0d; --paper:#f5f2eb; --accent:#7c3aed;
+      --muted:#7a7670; --card:#ffffff; --border:#e0dcd4;
+      --green:#2a7d4f; --orange:#d4522a;
+    }
+    body { font-family:'DM Sans',sans-serif; background:var(--paper); color:var(--ink); }
+
+    .sidebar {
+      position:fixed; left:0; top:0; bottom:0; width:240px;
+      background:var(--ink); display:flex; flex-direction:column; padding:28px 20px; z-index:100;
+    }
+    .sidebar-logo { font-family:'Syne',sans-serif; font-size:18px; font-weight:800;
+      color:#fff; letter-spacing:-0.5px; margin-bottom:40px; display:flex; align-items:center; gap:8px; }
+    .logo-dot { width:8px; height:8px; background:var(--accent); border-radius:50%; }
+    .nav-section { font-size:10px; letter-spacing:2px; text-transform:uppercase;
+      color:#666; margin:20px 0 8px; font-weight:500; }
+    .nav-item {
+      display:flex; align-items:center; gap:10px; padding:10px 12px;
+      border-radius:8px; cursor:pointer; font-size:14px;
+      color:#aaa; transition:all 0.15s; margin-bottom:2px; border:none;
+      background:transparent; width:100%; text-align:left; font-family:'DM Sans',sans-serif;
+    }
+    .nav-item:hover { background:#1e1e1e; color:#fff; }
+    .nav-item.active { background:var(--accent); color:#fff; font-weight:500; }
+    .nav-item .icon { font-size:16px; width:20px; text-align:center; }
+    .sidebar-bottom { margin-top:auto; }
+    .user-chip { display:flex; align-items:center; gap:10px; padding:12px;
+      background:#1a1a1a; border-radius:10px; }
+    .avatar { width:36px; height:36px; background:var(--accent); border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Syne',sans-serif; font-weight:700; font-size:14px; color:#fff; }
+    .user-name { font-size:13px; font-weight:500; color:#fff; }
+    .user-role { font-size:11px; color:#888; }
+
+    .main { margin-left:240px; padding:36px 40px; min-height:100vh; }
+    .page-header { margin-bottom:32px; }
+    .page-header h1 { font-family:'Syne',sans-serif; font-size:30px; font-weight:700; }
+    .page-header p { color:var(--muted); font-size:15px; margin-top:4px; }
+
+    .section { display:none; }
+    .section.active { display:block; }
+
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 22px; }
+    .stat-card .num { font-family:'Syne',sans-serif; font-size:28px; font-weight:700; }
+    .stat-card .lbl { font-size:12px; color:var(--muted); margin-top:3px; }
+    .stat-card.accent { background:var(--accent); border-color:var(--accent); }
+    .stat-card.accent .num,.stat-card.accent .lbl { color:#fff; }
+
+    /* ── BAR CHART (pure CSS) ── */
+    .chart-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:28px; margin-bottom:20px; }
+    .chart-card h3 { font-family:'Syne',sans-serif; font-size:16px; font-weight:600; margin-bottom:22px; }
+    .bar-chart { display:flex; align-items:flex-end; gap:12px; height:160px; }
+    .bar-col { display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; }
+    .bar { width:100%; background:var(--accent); border-radius:5px 5px 0 0; transition:height 0.5s; position:relative; }
+    .bar:hover { opacity:0.8; }
+    .bar-val { font-size:11px; font-weight:600; color:var(--ink); }
+    .bar-lbl { font-size:11px; color:var(--muted); }
+
+    /* ── TABLE ── */
+    .table-wrap { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+    table { width:100%; border-collapse:collapse; }
+    th { padding:14px 18px; font-size:11px; font-weight:500; letter-spacing:1px;
+      text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border);
+      text-align:left; background:var(--paper); }
+    td { padding:14px 18px; font-size:14px; border-bottom:1px solid var(--border); }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#faf9f7; }
+
+    .status-placed  { background:#dcfce7; color:#166534; }
+    .status-ongoing { background:#dbeafe; color:#1e40af; }
+    .status-pending { background:#fef9c3; color:#854d0e; }
+
+    .pill { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; display:inline-block; }
+
+    /* ── REPORT BUTTONS ── */
+    .report-actions { display:flex; gap:12px; margin-bottom:20px; }
+    .btn-primary {
+      padding:11px 24px; background:var(--accent); color:#fff; border:none;
+      border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;
+      font-family:'DM Sans',sans-serif; transition:opacity 0.2s;
+    }
+    .btn-primary:hover { opacity:0.85; }
+    .btn-outline {
+      padding:11px 24px; background:var(--card); color:var(--ink);
+      border:1.5px solid var(--border); border-radius:8px; font-size:14px;
+      font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s;
+    }
+    .btn-outline:hover { border-color:var(--ink); }
+
+    /* ── COMPANY TABLE ── */
+    .company-row-logo { display:inline-flex; align-items:center; justify-content:center;
+      width:30px; height:30px; border-radius:7px; background:var(--paper);
+      border:1px solid var(--border); font-size:16px; margin-right:8px; }
+
+    .toast { position:fixed; bottom:24px; right:24px; background:var(--ink); color:#fff;
+      padding:12px 20px; border-radius:8px; font-size:14px; opacity:0;
+      transform:translateY(8px); transition:all 0.3s; pointer-events:none; z-index:999; }
+    .toast.show { opacity:1; transform:translateY(0); }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="logo-dot"></div>InternBridge</div>
+  <div class="nav-section">Overview</div>
+  <button class="nav-item active" onclick="showSection('overview', this)">
+    <span class="icon">📊</span> Overview
+  </button>
+  <button class="nav-item" onclick="showSection('placements', this)">
+    <span class="icon">🎓</span> Placements
+  </button>
+  <button class="nav-item" onclick="showSection('companies', this)">
+    <span class="icon">🏢</span> Companies
+  </button>
+  <button class="nav-item" onclick="showSection('reports', this)">
+    <span class="icon">📄</span> Reports
+  </button>
+  <div class="nav-section">System</div>
+  <button class="nav-item" onclick="logout()"><span class="icon">🚪</span> Logout</button>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar">A</div>
+      <div>
+        <div class="user-name">Dept. Admin</div>
+        <div class="user-role">CSE Department</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- OVERVIEW -->
+  <div class="section active" id="sec-overview">
+    <div class="page-header">
+      <h1>Department Overview</h1>
+      <p>CSE Department · Academic Year 2024–25</p>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card accent"><div class="num">142</div><div class="lbl">Total Students</div></div>
+      <div class="stat-card"><div class="num">89</div><div class="lbl">Placed</div></div>
+      <div class="stat-card"><div class="num">62.6%</div><div class="lbl">Placement Rate</div></div>
+      <div class="stat-card"><div class="num">₹22K</div><div class="lbl">Avg Stipend</div></div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Placements by month</h3>
+      <div class="bar-chart" id="bar-chart"></div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Department-wise breakdown</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <div class="stat-card"><div class="num" style="color:var(--accent)">89</div><div class="lbl">CSE</div></div>
+        <div class="stat-card"><div class="num" style="color:#1e5fa8">54</div><div class="lbl">IT</div></div>
+        <div class="stat-card"><div class="num" style="color:#2a7d4f">41</div><div class="lbl">ECE</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLACEMENTS -->
+  <div class="section" id="sec-placements">
+    <div class="page-header">
+      <h1>Placement Records</h1>
+      <p>All student internship placements</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Student</th><th>Roll No</th><th>Company</th><th>Role</th><th>Stipend</th><th>Status</th></tr>
+        </thead>
+        <tbody id="placement-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- COMPANIES -->
+  <div class="section" id="sec-companies">
+    <div class="page-header">
+      <h1>Registered Companies</h1>
+      <p>Companies actively posting on InternBridge</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Company</th><th>Sector</th><th>Openings</th><th>Placed</th><th>Avg Stipend</th></tr>
+        </thead>
+        <tbody id="company-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPORTS -->
+  <div class="section" id="sec-reports">
+    <div class="page-header">
+      <h1>Generate Reports</h1>
+      <p>Export placement data for records</p>
+    </div>
+    <div class="report-actions">
+      <button class="btn-primary" onclick="downloadCSV()">⬇ Download CSV Report</button>
+      <button class="btn-outline" onclick="showToast('PDF generation requires backend — coming in Phase 2!')">⬇ Download PDF Report</button>
+    </div>
+    <div class="chart-card">
+      <h3>Report Preview — Placement Summary</h3>
+      <div style="font-family:monospace;font-size:13px;line-height:1.8;color:var(--muted);
+        background:var(--paper);border-radius:8px;padding:16px;overflow-x:auto;" id="csv-preview"></div>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const placements = [
+    { name:'Arjun Sharma',  roll:'21CSE0142', company:'Infosys',   role:'Frontend Intern',    stipend:'₹20,000', status:'ongoing' },
+    { name:'Priya Nair',    roll:'21CSE0089', company:'Zoho Corp', role:'Full Stack Intern',   stipend:'₹25,000', status:'ongoing' },
+    { name:'Rohan Das',     roll:'21CSE0201', company:'TCS',       role:'Data Science Intern', stipend:'₹18,000', status:'ongoing' },
+    { name:'Sneha Pillai',  roll:'21CSE0167', company:'Wipro',     role:'Backend Intern',      stipend:'₹15,000', status:'placed'  },
+    { name:'Karan Mehta',   roll:'21CSE0310', company:'HCL Tech',  role:'DevOps Intern',       stipend:'₹22,000', status:'placed'  },
+    { name:'Aisha Khan',    roll:'21CSE0411', company:'Freshworks',role:'React Native Intern',  stipend:'₹28,000', status:'pending' },
+  ];
+
+  const companies = [
+    { name:'Infosys',    logo:'🔵', sector:'IT Services',   openings:5, placed:18, stipend:'₹20,000' },
+    { name:'Zoho Corp',  logo:'🟠', sector:'SaaS/Product',  openings:3, placed:12, stipend:'₹25,000' },
+    { name:'TCS',        logo:'🟣', sector:'IT Consulting', openings:8, placed:24, stipend:'₹18,000' },
+    { name:'Wipro',      logo:'🟢', sector:'IT Services',   openings:4, placed:9,  stipend:'₹15,000' },
+    { name:'Freshworks', logo:'🌿', sector:'SaaS/Product',  openings:2, placed:5,  stipend:'₹28,000' },
+  ];
+
+  const monthlyData = [
+    { m:'Aug', v:4 }, { m:'Sep', v:9 }, { m:'Oct', v:14 },
+    { m:'Nov', v:22 }, { m:'Dec', v:18 }, { m:'Jan', v:22 },
+  ];
+
+  // Bar chart
+  const maxV = Math.max(...monthlyData.map(d => d.v));
+  document.getElementById('bar-chart').innerHTML = monthlyData.map(d => `
+    <div class="bar-col">
+      <div class="bar-val">${d.v}</div>
+      <div class="bar" style="height:${Math.round((d.v/maxV)*130)}px"></div>
+      <div class="bar-lbl">${d.m}</div>
+    </div>
+  `).join('');
+
+  // Placements table
+  document.getElementById('placement-body').innerHTML = placements.map(p => `
+    <tr>
+      <td><strong>${p.name}</strong></td>
+      <td style="color:var(--muted);font-size:13px">${p.roll}</td>
+      <td>${p.company}</td>
+      <td>${p.role}</td>
+      <td style="font-weight:600;color:var(--green)">${p.stipend}</td>
+      <td><span class="pill status-${p.status}">${p.status}</span></td>
+    </tr>
+  `).join('');
+
+  // Companies table
+  document.getElementById('company-body').innerHTML = companies.map(c => `
+    <tr>
+      <td><span class="company-row-logo">${c.logo}</span><strong>${c.name}</strong></td>
+      <td>${c.sector}</td>
+      <td>${c.openings}</td>
+      <td>${c.placed}</td>
+      <td style="font-weight:600;color:var(--green)">${c.stipend}</td>
+    </tr>
+  `).join('');
+
+  // CSV preview
+  const csvLines = [
+    'Student Name,Roll No,Company,Role,Stipend,Status',
+    ...placements.map(p => `${p.name},${p.roll},${p.company},${p.role},${p.stipend},${p.status}`)
+  ];
+  document.getElementById('csv-preview').textContent = csvLines.join('\n');
+
+  function downloadCSV() {
+    const csv = csvLines.join('\n');
+    const blob = new Blob([csv], { type:'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'placement_report.csv';
+    a.click(); URL.revokeObjectURL(url);
+    showToast('CSV report downloaded!');
+  }
+
+  function showSection(name, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(`sec-${name}`).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function logout() { sessionStorage.clear(); window.location.href = '/Front-end/index.html'; }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>

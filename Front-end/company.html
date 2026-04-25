@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Company Dashboard — InternBridge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #0d0d0d; --paper: #f5f2eb; --accent: #1e5fa8;
+      --muted: #7a7670; --card: #ffffff; --border: #e0dcd4; --green: #2a7d4f;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); }
+
+    .sidebar {
+      position: fixed; left:0; top:0; bottom:0; width:240px;
+      background: var(--ink); color: var(--paper);
+      display:flex; flex-direction:column; padding:28px 20px; z-index:100;
+    }
+    .sidebar-logo { font-family:'Syne',sans-serif; font-size:18px; font-weight:800;
+      letter-spacing:-0.5px; margin-bottom:40px; display:flex; align-items:center; gap:8px; }
+    .logo-dot { width:8px; height:8px; background:var(--accent); border-radius:50%; }
+    .nav-section { font-size:10px; letter-spacing:2px; text-transform:uppercase;
+      color:#666; margin:20px 0 8px; font-weight:500; }
+    .nav-item {
+      display:flex; align-items:center; gap:10px; padding:10px 12px;
+      border-radius:8px; cursor:pointer; font-size:14px; font-weight:400;
+      color:#aaa; transition:all 0.15s; margin-bottom:2px; border:none;
+      background:transparent; width:100%; text-align:left;
+    }
+    .nav-item:hover { background:#1e1e1e; color:var(--paper); }
+    .nav-item.active { background:var(--accent); color:#fff; font-weight:500; }
+    .nav-item .icon { font-size:16px; width:20px; text-align:center; }
+    .sidebar-bottom { margin-top:auto; }
+    .user-chip { display:flex; align-items:center; gap:10px; padding:12px;
+      background:#1a1a1a; border-radius:10px; }
+    .avatar { width:36px; height:36px; background:var(--accent); border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Syne',sans-serif; font-weight:700; font-size:14px; color:#fff; }
+    .user-name { font-size:13px; font-weight:500; }
+    .user-role { font-size:11px; color:#888; }
+
+    .main { margin-left:240px; padding:36px 40px; min-height:100vh; }
+    .page-header { margin-bottom:32px; }
+    .page-header h1 { font-family:'Syne',sans-serif; font-size:30px; font-weight:700; }
+    .page-header p { color:var(--muted); font-size:15px; margin-top:4px; }
+
+    .section { display:none; }
+    .section.active { display:block; }
+
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:20px 22px; }
+    .stat-card .num { font-family:'Syne',sans-serif; font-size:28px; font-weight:700; }
+    .stat-card .lbl { font-size:12px; color:var(--muted); margin-top:3px; }
+    .stat-card.accent { background:var(--accent); border-color:var(--accent); }
+    .stat-card.accent .num, .stat-card.accent .lbl { color:#fff; }
+
+    /* Post form */
+    .form-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:28px; margin-bottom:20px; }
+    .form-card h3 { font-family:'Syne',sans-serif; font-size:18px; font-weight:600; margin-bottom:22px; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .form-grid.three { grid-template-columns:1fr 1fr 1fr; }
+    .field { margin-bottom:16px; }
+    .field.full { grid-column:1/-1; }
+    .field label { display:block; font-size:11px; font-weight:500; text-transform:uppercase;
+      letter-spacing:0.5px; color:var(--muted); margin-bottom:6px; }
+    .field input,.field select,.field textarea {
+      width:100%; padding:10px 14px; border:1.5px solid var(--border);
+      border-radius:8px; font-family:'DM Sans',sans-serif; font-size:14px;
+      background:var(--paper); color:var(--ink); outline:none; transition:border-color 0.2s; resize:vertical;
+    }
+    .field input:focus,.field select:focus,.field textarea:focus { border-color:var(--accent); }
+
+    .btn-primary {
+      padding:11px 28px; background:var(--accent); color:#fff; border:none;
+      border-radius:8px; font-size:14px; font-weight:500; cursor:pointer;
+      font-family:'DM Sans',sans-serif; transition:opacity 0.2s;
+    }
+    .btn-primary:hover { opacity:0.88; }
+
+    /* Listings */
+    .listing-card { background:var(--card); border:1px solid var(--border); border-radius:12px;
+      padding:20px 24px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+    .listing-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:600; }
+    .listing-meta { font-size:13px; color:var(--muted); margin-top:3px; }
+    .listing-actions { display:flex; gap:8px; }
+    .btn-sm {
+      padding:7px 16px; border-radius:7px; font-size:13px; font-weight:500; cursor:pointer;
+      font-family:'DM Sans',sans-serif; border:1px solid var(--border); background:var(--paper);
+      color:var(--ink); transition:all 0.15s;
+    }
+    .btn-sm:hover { background:var(--ink); color:#fff; border-color:var(--ink); }
+    .btn-sm.danger:hover { background:#c0392b; border-color:#c0392b; color:#fff; }
+    .open-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px;
+      font-weight:600; background:#dcfce7; color:#166534; margin-left:8px; }
+    .closed-badge { background:#fee2e2; color:#991b1b; }
+
+    /* Applicants table */
+    .table-wrap { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+    table { width:100%; border-collapse:collapse; }
+    th { padding:14px 18px; font-size:11px; font-weight:500; letter-spacing:1px;
+      text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border);
+      text-align:left; background:var(--paper); }
+    td { padding:14px 18px; font-size:14px; border-bottom:1px solid var(--border); }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#faf9f7; }
+    .match-pill { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; }
+    .m-high { background:#dcfce7; color:#166534; }
+    .m-mid  { background:#fef9c3; color:#854d0e; }
+    .m-low  { background:#fee2e2; color:#991b1b; }
+
+    .action-btns { display:flex; gap:6px; }
+    .btn-shortlist { padding:5px 12px; border-radius:6px; font-size:12px; font-weight:500;
+      background:var(--accent); color:#fff; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    .btn-reject { padding:5px 12px; border-radius:6px; font-size:12px; font-weight:500;
+      background:var(--paper); color:var(--muted); border:1px solid var(--border); cursor:pointer; font-family:'DM Sans',sans-serif; }
+    .btn-reject:hover { background:#fee2e2; color:#991b1b; border-color:#f9c1c1; }
+
+    .toast { position:fixed; bottom:24px; right:24px; background:var(--ink); color:#fff;
+      padding:12px 20px; border-radius:8px; font-size:14px; opacity:0;
+      transform:translateY(8px); transition:all 0.3s; pointer-events:none; z-index:999; }
+    .toast.show { opacity:1; transform:translateY(0); }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="logo-dot"></div>InternBridge</div>
+  <div class="nav-section">Manage</div>
+  <button class="nav-item active" onclick="showSection('applicants', this)">
+    <span class="icon">👥</span> Applicants
+  </button>
+  <button class="nav-item" onclick="showSection('post', this)">
+    <span class="icon">➕</span> Post Internship
+  </button>
+  <button class="nav-item" onclick="showSection('listings', this)">
+    <span class="icon">📌</span> My Listings
+  </button>
+  <div class="nav-section">Account</div>
+  <button class="nav-item" onclick="logout()"><span class="icon">🚪</span> Logout</button>
+  <div class="sidebar-bottom">
+    <div class="user-chip">
+      <div class="avatar">I</div>
+      <div>
+        <div class="user-name">Infosys HR</div>
+        <div class="user-role">Company Account</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- APPLICANTS -->
+  <div class="section active" id="sec-applicants">
+    <div class="page-header">
+      <h1>Applicants</h1>
+      <p>Students who applied to your internships</p>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card accent"><div class="num">18</div><div class="lbl">Total Applicants</div></div>
+      <div class="stat-card"><div class="num">6</div><div class="lbl">Shortlisted</div></div>
+      <div class="stat-card"><div class="num">3</div><div class="lbl">Open Positions</div></div>
+      <div class="stat-card"><div class="num">2</div><div class="lbl">Offers Made</div></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Student</th><th>Roll No</th><th>CGPA</th><th>Skills</th><th>Match</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="applicants-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- POST INTERNSHIP -->
+  <div class="section" id="sec-post">
+    <div class="page-header">
+      <h1>Post an Internship</h1>
+      <p>Fill in the details to go live</p>
+    </div>
+    <div class="form-card">
+      <h3>Internship Details</h3>
+      <div class="form-grid">
+        <div class="field"><label>Role Title</label><input type="text" id="post-title" placeholder="e.g. Frontend Developer Intern"/></div>
+        <div class="field"><label>Department</label>
+          <select id="post-dept">
+            <option>Engineering</option><option>Data Science</option>
+            <option>Product</option><option>Design</option><option>Marketing</option>
+          </select>
+        </div>
+        <div class="field"><label>Duration</label>
+          <select id="post-dur">
+            <option>1 month</option><option>2 months</option><option>3 months</option>
+            <option>6 months</option>
+          </select>
+        </div>
+        <div class="field"><label>Monthly Stipend (₹)</label><input type="number" id="post-stipend" placeholder="20000"/></div>
+        <div class="field"><label>Mode</label>
+          <select id="post-mode">
+            <option>Remote</option><option>On-site</option><option>Hybrid</option>
+          </select>
+        </div>
+        <div class="field"><label>Open Positions</label><input type="number" id="post-seats" placeholder="3"/></div>
+        <div class="field full"><label>Required Skills (comma separated)</label>
+          <input type="text" id="post-skills" placeholder="React, Node.js, MongoDB"/>
+        </div>
+        <div class="field full"><label>Job Description</label>
+          <textarea id="post-desc" rows="4" placeholder="Describe the role, responsibilities, and what the intern will work on…"></textarea>
+        </div>
+        <div class="field full"><label>Minimum CGPA</label>
+          <input type="number" id="post-cgpa" placeholder="7.0" step="0.1" max="10"/>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="postInternship()">Post Internship →</button>
+    </div>
+  </div>
+
+  <!-- MY LISTINGS -->
+  <div class="section" id="sec-listings">
+    <div class="page-header">
+      <h1>My Listings</h1>
+      <p>Manage your posted internships</p>
+    </div>
+    <div id="listings-container"></div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const applicants = [
+    { name:'Arjun Sharma', roll:'21CSE0142', cgpa:8.4, skills:['React','Node.js','MongoDB'], match:92 },
+    { name:'Priya Nair',   roll:'21CSE0089', cgpa:9.1, skills:['React','TypeScript','CSS'], match:88 },
+    { name:'Rohan Das',    roll:'21CSE0201', cgpa:7.8, skills:['JavaScript','HTML','Express'], match:73 },
+    { name:'Sneha Pillai', roll:'21CSE0167', cgpa:8.0, skills:['Node.js','PostgreSQL','REST'], match:68 },
+    { name:'Karan Mehta',  roll:'21CSE0310', cgpa:7.2, skills:['Python','Django','SQL'], match:45 },
+  ];
+
+  const listings = [
+    { title:'Frontend Developer Intern', applicants:8, status:'open',   seats:2, dur:'3 months' },
+    { title:'Full Stack Intern',         applicants:6, status:'open',   seats:1, dur:'6 months' },
+    { title:'Data Engineer Intern',      applicants:4, status:'closed', seats:0, dur:'2 months' },
+  ];
+
+  function matchClass(m) {
+    return m >= 80 ? 'm-high' : m >= 60 ? 'm-mid' : 'm-low';
+  }
+
+  // render applicants
+  function renderApplicants() {
+    document.getElementById('applicants-body').innerHTML = applicants.map((a,i) => `
+      <tr id="row-${i}">
+        <td><strong>${a.name}</strong></td>
+        <td>${a.roll}</td>
+        <td>${a.cgpa}</td>
+        <td>${a.skills.join(', ')}</td>
+        <td><span class="match-pill ${matchClass(a.match)}">${a.match}%</span></td>
+        <td>
+          <div class="action-btns">
+            <button class="btn-shortlist" onclick="shortlist(${i})">Shortlist</button>
+            <button class="btn-reject" onclick="reject(${i})">Reject</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+  renderApplicants();
+
+  function shortlist(i) {
+    const row = document.getElementById(`row-${i}`);
+    row.querySelector('.action-btns').innerHTML = '<span style="color:#166534;font-size:13px;font-weight:600;">✓ Shortlisted</span>';
+    showToast(`${applicants[i].name} shortlisted!`);
+  }
+  function reject(i) {
+    const row = document.getElementById(`row-${i}`);
+    row.style.opacity = '0.4';
+    row.querySelector('.action-btns').innerHTML = '<span style="color:#991b1b;font-size:13px;">✗ Rejected</span>';
+    showToast(`${applicants[i].name} rejected.`);
+  }
+
+  // render listings
+  function renderListings() {
+    document.getElementById('listings-container').innerHTML = listings.map((l,i) => `
+      <div class="listing-card" id="listing-${i}">
+        <div>
+          <div class="listing-title">
+            ${l.title}
+            <span class="open-badge ${l.status==='closed'?'closed-badge':''}">${l.status}</span>
+          </div>
+          <div class="listing-meta">${l.applicants} applicants · ${l.seats} seats · ${l.dur}</div>
+        </div>
+        <div class="listing-actions">
+          <button class="btn-sm" onclick="toggleStatus(${i})">${l.status==='open'?'Close':'Reopen'}</button>
+          <button class="btn-sm danger" onclick="deleteListing(${i})">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  renderListings();
+
+  function toggleStatus(i) {
+    listings[i].status = listings[i].status === 'open' ? 'closed' : 'open';
+    renderListings();
+  }
+  function deleteListing(i) {
+    listings.splice(i, 1);
+    renderListings();
+    showToast('Listing removed.');
+  }
+
+  function postInternship() {
+    const title = document.getElementById('post-title').value.trim();
+    if (!title) { showToast('Please enter a role title'); return; }
+    listings.unshift({ title, applicants:0, status:'open', seats: parseInt(document.getElementById('post-seats').value)||1, dur: document.getElementById('post-dur').value });
+    showToast('Internship posted successfully!');
+    document.getElementById('post-title').value = '';
+    renderListings();
+  }
+
+  function showSection(name, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(`sec-${name}`).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function logout() { sessionStorage.clear(); window.location.href = '/Front-end/index.html'; }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>

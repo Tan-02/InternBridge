@@ -358,26 +358,36 @@
       `<strong>${hintLabels[role]}</strong>Email: ${cred.email} &nbsp;|&nbsp; Password: ${cred.pass}`;
   }
 
-  function handleLogin() {
+ async function handleLogin() {
     const email    = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
-    const cred     = demoCredentials[currentRole];
 
     if (!email || !password) { showToast('Please fill in all fields'); return; }
 
-  
-    sessionStorage.setItem('role', currentRole);
-    sessionStorage.setItem('user', JSON.stringify({ email, role: currentRole, name: hintLabels[currentRole] }));
+    try {
+        const res  = await fetch('https://internbridge-puce.vercel.app/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
 
-    if (email === cred.email && password === cred.pass) {
-      showToast('Signing in…');
-      setTimeout(() => window.location.href = cred.page, 700);
-    } else {
+        const data = await res.json();
 
-      showToast('Signing in…');
-      setTimeout(() => window.location.href = cred.page, 700);
+        if (!res.ok) { showToast(data.msg || 'Login failed'); return; }
+
+        sessionStorage.setItem('token', data.token);
+        sessionStorage.setItem('role', data.role);
+        sessionStorage.setItem('name', data.name);
+
+        showToast('Signing in...');
+        setTimeout(() => {
+            window.location.href = `/Front-end/${data.role}.html`;
+        }, 700);
+
+    } catch (err) {
+        showToast('Server error!');
     }
-  }
+}
 
   function showToast(msg) {
     const t = document.getElementById('toast');

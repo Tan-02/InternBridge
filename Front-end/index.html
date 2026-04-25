@@ -365,7 +365,7 @@
     if (!email || !password) { showToast('Please fill in all fields'); return; }
 
     try {
-        const res  = await fetch('https://internbridge-puce.vercel.app/auth/login', {
+        const res  = await fetch('https://internbridge-1.onrender.com/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
